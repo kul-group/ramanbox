@@ -28,7 +28,7 @@ class RamanInputParser(ABC):
         pass
 
     @abstractmethod
-    def get_metadata_and_spectrum(self, filepath) -> Tuple[Dict, List[float]]:
+    def get_metadata_and_spectrum(self, filepath) -> Tuple[Dict, List[List[float]]]:
         pass
 
 
@@ -42,6 +42,11 @@ class TatuRamanParser(RamanInputParser):
         self.spectrum_length = 1024
 
     def get_metadata_and_spectrum(self, filepath):
+        """
+
+        :param filepath: A filepath to a text file containing Raman data
+        :return: metadata in a dictionary and a list of different spectra in a datalist
+        """
         with open(filepath) as infile:  # opens file and then stores
             metadata = self.get_metadata(infile)
             datalist = self.get_file_spectra(infile)
@@ -49,6 +54,11 @@ class TatuRamanParser(RamanInputParser):
 
     @staticmethod
     def get_metadata(file_iterator):
+        """
+        Takes a file_iterator and parses out the metadata
+        :param file_iterator: A fileiterator to iterate through (has side effects)
+        :return: A dictionary containing the metadata
+        """
         metadata_values = {}  # creates dictionary to return
         for line in file_iterator:
             if (line == "\n"):  # determines when metadata ends and spectra data begins
@@ -76,6 +86,11 @@ class TatuRamanParser(RamanInputParser):
         return metadata_values
 
     def get_file_spectra(self, file_iterator):
+        """
+
+        :param file_iterator: A file iterator where the metadata has been skipped
+        :return: a list of lists containing spectra
+        """
         i = 0
         data_list = []
         data_array = np.zeros((1024, 2), dtype=float)  # this is for storing the data
@@ -141,12 +156,15 @@ class Raman_Folder:
         self.build_xarray()
 
     def build_xarray(self):
-        # some variables used in the program
-        # these are both useful although redudant
+        """
+        Builds an xarray object containing all of the spectra in a spot
+        :return:
+        """
+
         spot_name_dict = {}
         spot_name_list = []  # this is a list containing all of the names of the spots scanned
 
-        # find the dimentions of 3d array
+        # find the dimensions of 3d array
         max_spectra_num = 0  # this block finds the max number of spectra in a spot (usually 19 or 20)
         for value in self.raman_spot_dict.values():
             tmp_spectra_num = len(value.data_list)
@@ -179,6 +197,9 @@ class Raman_Folder:
 
 
 class Patient_Data:
+    """
+    Performs plotting, baseline correction, and other processing on Raman spectra
+    """
     def __init__(self, filename):
         self.filename = filename  # stores filename for storage later
         # opens dataset from file
