@@ -17,7 +17,11 @@ import xarray as xr
 
 
 class RamanInputParser(ABC):
-
+    """
+    This is an abstract base class for a Raman Input Parser.
+    It allows this code to be tailored to the unique file formats that
+    one might encounter when loading in Raman spectra.
+    """
     @property
     @abstractmethod
     def spectrum_length(self) -> int:
@@ -29,6 +33,11 @@ class RamanInputParser(ABC):
 
 
 class TatuRamanParser(RamanInputParser):
+    """
+    This is a specific RamanInputParser that inherits from the abstract base class.
+    This practice of inheritance ensures that it impliments the correct methods
+    to work with the RamanSpot Class
+    """
     def __init__(self):
         self.spectrum_length = 1024
 
@@ -76,7 +85,6 @@ class TatuRamanParser(RamanInputParser):
                 continue
             splt_line = line.split("	")
             if (len(splt_line) != 3):  # skips nondata
-                print("I am called")
                 print(line)
                 continue
                 # if you go through one whole dataset  if(len(wavelength_list)!=0 and wavelength<wavelength_list[-1]):
@@ -96,39 +104,38 @@ class TatuRamanParser(RamanInputParser):
 
 class RamanSpot:
     """
-    Raman spot is a class which represents the
+    Raman spot is a class which represents the collection of spectra in a Raman file
+    Each spot in a SERS spectra has multiple spectra associated with it.
     """
 
-    def __init__(self, input_filename, input_data_dir, output_data_dir,
-                 ramam_input_parser=TatuRamanParser):  # initalizes a Raman object from a text file
+    def __init__(self, input_filepath, ramam_input_parser=TatuRamanParser):  # initalizes a Raman object from a text file
         """
-
         :param filename: The name of the text file to turn into a Raman Spot object
         :param data_dir: The directory where the text file is stored
         """
-        # initilize atributes
-        self.input_filename = input_filename
-        self.input_data_dir = input_data_dir
-        self.input_filepath = os.path.join(input_data_dir, input_filename)
-        self.output_data_dir = output_data_dir
-        self.ramam_input_parser = ramam_input_parser
-
-        self.metadata_values, self.data_list = ramam_input_parser.get_metadata_and_spectrum(self.input_filename)
-        self.average_spectra = np.zeros((1024, 2), dtype=float)
+        self.input_filepath = input_filepath
+        self.ramam_input_parser_obj = ramam_input_parser()
+        self.metadata_values, self.data_list = \
+            self.ramam_input_parser_obj.get_metadata_and_spectrum(self.input_filepath)
 
 
 class Raman_Folder:
-    def __init__(self, root_location, folder_name):
+    """
+    A raman folder contains multiple text files, of Raman spots. Each folder typically represents a
+    single patient. This code loads in all of the spot files in a single folder and then saves the
+    data in an xarray format, which can be loaded in by a patient data function
+    """
+    def __init__(self, data_dir, folder_name, laser_wavelength=785):
 
         self.folder_name = folder_name
-        glob_cmd = root_location + folder_name + "*.txt"
+        glob_cmd = os.path.join(data_dir, folder_name, "*.txt")
         self.file_list = glob.glob(glob_cmd)
         self.raman_spot_dict = {}
-        self.laser_wavelength = 785  # nm
-        for filename in self.file_list:
-            spot_index = filename.find("SPOT", 0, len(filename))
-            key = filename[spot_index + 4:spot_index + 7]
-            self.raman_spot_dict[key] = RamanSpot(filename)
+        self.laser_wavelength = laser_wavelength  # nm
+        for filepath in self.file_list:
+            spot_index = filepath.find("SPOT", 0, len(filepath))
+            key = filepath[spot_index + 4:spot_index + 7]
+            self.raman_spot_dict[key] = RamanSpot(filepath)
 
         self.xrdata = None
         self.build_xarray()
@@ -152,15 +159,7 @@ class Raman_Folder:
         spectra_points_num = 1024  # this is the number of points in a spectra
         # this declares the 3d numpy array that will now be filled
         data = np.zeros((spots_num, spectra_num,
-                         spectra_points_num))  # this builds a numpy array to store the values  #xr.DataArray.from_dict(np.zeros(spots_num,spectra_num,spectra_points_num),dim=('wavelength','spectra','spot'))
-        # self.average_data = np.zeros((self.spectra_num,self.spectra_points_num)) #this builds a numpy array to store average values
-
-        # now we fill up the numpyarray.
-        #### structure ###
-        # [:,0,0] spot id 10
-        # [0,:,0] spectra in spot
-        # [0,0,:] points in spectra
-
+                         spectra_points_num))  # this builds a numpy array to store the values
         i = 0
         for key, raman_spot in self.raman_spot_dict.items():
             spot_name_dict[i] = key
@@ -177,29 +176,7 @@ class Raman_Folder:
         wavenumbers = (1 / (self.laser_wavelength) - 1 / wavelengths) * (10e9 / 10e2)  # cm^-1` relative wavenumbers
         self.xrdata = xr.DataArray(data=data, dims=('spot', 'spectrum', 'point'),
                                    coords={'point': wavenumbers, 'spot': spot_name_list})
-        # dataset_dict[folder_name].to_netcdf("netcdf/"+file_name+".nc")
 
-    # these are for troubleshooting only.
-
-
-#    def plot_everything(self):
-#        avearge_list = []
-#        name_list = []
-#        plt.figure(num=None, figsize=(10, 7.5), dpi=80, facecolor='w', edgecolor='k')
-#        for key, raman_spot in self.raman_spot_dict.items():
-#            avearge_list.append(raman_spot.get_average())
-#            name_list.append(key)
-#        i = 0
-#        for avg in avearge_list:
-#            plt.plot(avg[:,0],avg[:,1]+i*100,'-',label="Spot: " + name_list[i]) #offset for visualization
-#            i+= 1
-#        plt.legend()
-#        plt.title("Sample: " + self.folder_name[:-1])
-#        plt.xlabel("Wavelength")
-#        plt.ylabel("Offset Intensity")
-#
-#    def plot_specific_spot(self,key):
-#        self.raman_spot_dict[key].plot_average()
 
 class Patient_Data:
     def __init__(self, filename):
@@ -239,13 +216,12 @@ class Patient_Data:
 
             if (error_bars):
                 plt.fill_between(x, y - y_error, y + y_error, alpha=0.5)
-            offset += self.offset_amnt  # np.ptp(y,axis=0)
+            offset += self.offset_amnt
 
         plt.legend()
         plt.xlabel("Wavenumber $(cm^{-1})$")
         plt.ylabel("offset intensity")
         plt.ylim(self.yrange)
-        # plt.savefig("with_errors.svg")
 
     def plot_spot(self, spot_id):
         plt.figure(num=None, figsize=(10, 7.5), dpi=80, facecolor='w', edgecolor='k')
@@ -261,12 +237,12 @@ class Patient_Data:
         plt.xlabel("Wavenumber $(cm^{-1})$")
         plt.ylabel("Offset Intensity")
         plt.ylim(self.yrange)
-        # plt.savefig("with_errors.svg")
 
     def baseline_als(self, y, lam, p, niter=10):  # baseline correction algorthmn
         L = len(y)
         D = sparse.diags([1, -2, 1], [0, -1, -2], shape=(L, L - 2))
         w = np.ones(L)
+        z = None
         for i in range(niter):
             W = sparse.spdiags(w, 0, L, L)
             Z = W + lam * D.dot(D.transpose())
