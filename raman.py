@@ -1,6 +1,5 @@
 # standard library imports
 import os
-
 # related third party imports
 # standard anaconda libs
 import glob as glob
@@ -9,121 +8,74 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
-from abc import ABC
-from abc import abstractmethod, abstractproperty
 # additional libs
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import xarray as xr
+from itertools import count
+from processing import SpectrumProcessor, DefaultSpotParser
+from constants import PositionType
 
 
-class RamanInputParser(ABC):
-    """
-    This is an abstract base class for a Raman Input Parser.
-    It allows this code to be tailored to the unique file formats that
-    one might encounter when loading in Raman spectra.
-    """
-    @property
-    @abstractmethod
-    def spectrum_length(self) -> int:
+class Spectrum:
+    def __init__(self, raw_data: np.array, processor: SpectrumProcessor,
+                 laser_wavelength: float,
+                 position_type: PositionType = PositionType.WAVELENGTH):
+        self.data_length = len(raw_data)
+        self.raw_data = raw_data[:, 1]
+        self.raw_positions = raw_data[:, 0]
+        self.processor = processor
+        self.laser_wavelength = laser_wavelength
+        self.position_type = position_type
+        # actually do the processing here
+        self.wavenumbers = processor.get_wavenumber(self.raw_positions, position_type)
+        self.corrected_data = processor.correct_spectrum(self.raw_data)
+
+
+class Spot:
+    def __init__(self, spectrum_list: List[Spectrum], position: Optional[Tuple[float, float]] = None,
+                 metadata: Optional[Dict] = None, filepath: Optional[str] = None):
+        self.spectrum_list = spectrum_list
+        self.position = position
+        self.metadata = metadata
+        self.filepath = filepath
+
+    def plot(self, plot_raw=False, break_after=10):
+        offset = 0
+        plt.figure(1, figsize=(5, 8), dpi=300)
+        for index, spectrum in zip(count(), self.spectrum_list):
+            x = spectrum.wavenumbers
+            y = spectrum.corrected_data + offset
+            offset += max(spectrum.corrected_data) * 1.1
+            plt.plot(x, y, label=f'index {index}')
+            if index >= break_after:
+                break
+
+        plt.legend()
+        plt.xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
+        plt.ylabel("Offset Relative Intensity")
+        plt.show()
+
+
+class Sample:
+    def __init__(self, spot_list: List[Spot], metadata: Optional[Dict] = None, filepath: Optional[str] = None, name=None):
+
+        self.spot_list = spot_list
+        self.metadata = metadata
+        self.filepath = filepath
+        self.name = name
+
+    def plot(self):
         pass
 
-    @abstractmethod
-    def get_metadata_and_spectrum(self, filepath) -> Tuple[Dict, List[List[float]]]:
-        pass
-
-
-class TatuRamanParser(RamanInputParser):
-    """
-    This is a specific RamanInputParser that inherits from the abstract base class.
-    This practice of inheritance ensures that it impliments the correct methods
-    to work with the RamanSpot Class
-    """
-    def __init__(self):
-        self.spectrum_length = 1024
-
-    def get_metadata_and_spectrum(self, filepath):
-        """
-
-        :param filepath: A filepath to a text file containing Raman data
-        :return: metadata in a dictionary and a list of different spectra in a datalist
-        """
-        with open(filepath) as infile:  # opens file and then stores
-            metadata = self.get_metadata(infile)
-            datalist = self.get_file_spectra(infile)
-        return metadata, datalist
-
-    @staticmethod
-    def get_metadata(file_iterator):
-        """
-        Takes a file_iterator and parses out the metadata
-        :param file_iterator: A fileiterator to iterate through (has side effects)
-        :return: A dictionary containing the metadata
-        """
-        metadata_values = {}  # creates dictionary to return
-        for line in file_iterator:
-            if (line == "\n"):  # determines when metadata ends and spectra data begins
-                return metadata_values
-            data_name = []
-            data_values = []
-            colon_encountered = False
-            iterline = iter(line)
-            for c in iterline:
-                if not colon_encountered and c == ":":
-                    colon_encountered = True
-                    c = next(iterline)
-                    while c == " ":
-                        c = next(iterline)  # iterates through all whitespace between key and date
-                if not colon_encountered:  # if you are iterating through the key
-                    data_name.append(c)
-                    continue
-                else:
-                    if c == "\n":  # skip newline characters
-                        continue
-                    data_values.append(c)
-                    continue
-
-            metadata_values["".join(data_name)] = "".join(data_values)  # adds name and value to a dictionary
-        return metadata_values
-
-    def get_file_spectra(self, file_iterator):
-        """
-
-        :param file_iterator: A file iterator where the metadata has been skipped
-        :return: a list of lists containing spectra
-        """
-        i = 0
-        data_list = []
-        data_array = np.zeros((1024, 2), dtype=float)  # this is for storing the data
-
-        for line in file_iterator:
-            if (line == "\n"):  # skips new line characters at the begining of the file
-                continue
-            splt_line = line.split("	")
-            if (len(splt_line) != 3):  # skips nondata
-                print(line)
-                continue
-                # if you go through one whole dataset  if(len(wavelength_list)!=0 and wavelength<wavelength_list[-1]):
-                # #if the wavelengths go back to the start point, restart things
-            if i >= self.spectrum_length:
-                data_list.append(data_array)
-                data_array = np.zeros((1024, 2), dtype=float)  # clears data array for next round
-                i = 0
-            wavelength = float(splt_line[0])
-            intensity = float(splt_line[1])
-            data_array[i, 0] = wavelength
-            data_array[i, 1] = intensity
-
-            i += 1
-        return data_list
-
-
+    def
 class RamanSpot:
     """
     Raman spot is a class which represents the collection of spectra in a Raman file
     Each spot in a SERS spectra has multiple spectra associated with it.
     """
 
-    def __init__(self, input_filepath, ramam_input_parser=TatuRamanParser):  # initalizes a Raman object from a text file
+    def __init__(self, input_filepath,
+                 ramam_input_parser=DefaultSpotParser):  # initalizes a Raman object from a text file
         """
         :param filename: The name of the text file to turn into a Raman Spot object
         :param data_dir: The directory where the text file is stored
@@ -140,6 +92,7 @@ class Raman_Folder:
     single patient. This code loads in all of the spot files in a single folder and then saves the
     data in an xarray format, which can be loaded in by a patient data function
     """
+
     def __init__(self, data_dir, folder_name, laser_wavelength=785):
 
         self.folder_name = folder_name
@@ -200,6 +153,7 @@ class Patient_Data:
     """
     Performs plotting, baseline correction, and other processing on Raman spectra
     """
+
     def __init__(self, filename):
         self.filename = filename  # stores filename for storage later
         # opens dataset from file
