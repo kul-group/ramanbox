@@ -1,12 +1,12 @@
 from abc import ABC
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 import numpy as np
 
 # smoothing imports
 from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
 from typing import Tuple, Dict, List
-from constants import PositionType
+from src.constants import PositionType
 
 class SpectrumProcessor:  # eventually build ABC
     def __init__(self, laser_wavelength: float) -> None:

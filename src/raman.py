@@ -9,56 +9,18 @@ from scipy import sparse
 from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
 # additional libs
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
+from src.processing import DefaultSpotParser
+from src.builders import SpotBuilder
 import xarray as xr
-from itertools import count
-from processing import SpectrumProcessor, DefaultSpotParser
-from constants import PositionType
 
 
-class Spectrum:
-    def __init__(self, raw_data: np.array, processor: SpectrumProcessor,
-                 laser_wavelength: float,
-                 position_type: PositionType = PositionType.WAVELENGTH):
-        self.data_length = len(raw_data)
-        self.raw_data = raw_data[:, 1]
-        self.raw_positions = raw_data[:, 0]
-        self.processor = processor
-        self.laser_wavelength = laser_wavelength
-        self.position_type = position_type
-        # actually do the processing here
-        self.wavenumbers = processor.get_wavenumber(self.raw_positions, position_type)
-        self.corrected_data = processor.correct_spectrum(self.raw_data)
 
-
-class Spot:
-    def __init__(self, spectrum_list: List[Spectrum], position: Optional[Tuple[float, float]] = None,
-                 metadata: Optional[Dict] = None, filepath: Optional[str] = None):
-        self.spectrum_list = spectrum_list
-        self.position = position
-        self.metadata = metadata
-        self.filepath = filepath
-
-    def plot(self, plot_raw=False, break_after=10):
-        offset = 0
-        plt.figure(1, figsize=(5, 8), dpi=300)
-        for index, spectrum in zip(count(), self.spectrum_list):
-            x = spectrum.wavenumbers
-            y = spectrum.corrected_data + offset
-            offset += max(spectrum.corrected_data) * 1.1
-            plt.plot(x, y, label=f'index {index}')
-            if index >= break_after:
-                break
-
-        plt.legend()
-        plt.xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
-        plt.ylabel("Offset Relative Intensity")
-        plt.show()
 
 
 class Sample:
-    def __init__(self, spot_list: List[Spot], metadata: Optional[Dict] = None, filepath: Optional[str] = None, name=None):
-
+    def __init__(self, spot_list: List[Spot], metadata: Optional[Dict] = None, filepath: Optional[str] = None,
+                 name=None):
         self.spot_list = spot_list
         self.metadata = metadata
         self.filepath = filepath
@@ -67,7 +29,16 @@ class Sample:
     def plot(self):
         pass
 
-    def
+    @staticmethod
+    def build_sample(folder_path: str, parser_class=DefaultSpotParser, metadata=None, name=None) -> "Sample":
+        file_list = glob.glob(os.path.join(folder_path, '*.txt'))
+        spot_list = []
+        for file in file_list:
+            spot_list.append(SpotBuilder(file, parser_class).build_spot())
+
+        return Sample(spot_list, metadata=metadata, filepath=folder_path, name=name)
+
+
 class RamanSpot:
     """
     Raman spot is a class which represents the collection of spectra in a Raman file

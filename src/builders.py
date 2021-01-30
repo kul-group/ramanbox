@@ -1,9 +1,10 @@
-from processing import SpectrumProcessor, DefaultSpotParser, SpotParser
-from raman import Spot, Spectrum
+from src.processing import SpectrumProcessor, DefaultSpotParser
+from src.spot import Spot
+from src.spectrum import Spectrum
 
 
 class SpotBuilder:
-    def __init__(self, filepath, parser_class=DefaultSpotParser):
+    def __init__(self, filepath: str, parser_class=DefaultSpotParser):
         self.filepath = filepath
         self.parser = parser_class(filepath)
 
@@ -24,7 +25,3 @@ class SpotBuilder:
 
         return new_spot
 
-if __name__ == "__main__":
-    my_builder = SpotBuilder("/Users/dda/Code/ramanbox/data/20200226_moxtek_R6G_3mM_60X_10mW_20x20_scan_1sec_exposure.txt")
-    my_spot = my_builder.build_spot()
-    my_spot.plot()
