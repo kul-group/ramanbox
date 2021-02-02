@@ -9,12 +9,28 @@ import xarray as xr
 class Spot:
     def __init__(self, spectrum_list: List[Spectrum], position: Optional[Tuple[float, float]] = None,
                  metadata: Optional[Dict] = None, filepath: Optional[str] = None):
+        """
+        This is a spot spectrum
+        :param spectrum_list: A list of the spectra
+        :type spectrum_list: List[Spectrum]
+        :param position: The spot's position
+        :type position: Optional[Tuple[float,float]]
+        :param metadata: Dictionary of metadata
+        :type metadata: Optional[Dict]
+        :param filepath: filepath to the spot .txt file
+        :type filepath: str
+        """
         self.spectrum_list = spectrum_list
         self.position = position
         self.metadata = metadata
         self.filepath = filepath
 
     def build_DataArray(self):
+        """
+        Build a DataArray object from a spot
+        :return: a DataArray object
+        :rtype: xr.DataArray
+        """
         assert len(self.spectrum_list) != 0, 'Spectra list empty, cannot build xarray'
         spectrum_length = self.spectrum_list[0].data_length
         laser_wavelength = self.spectrum_list[0].laser_wavelength
@@ -51,7 +67,16 @@ class Spot:
                             dims=dims, attrs=attributes)
 
 
-    def plot(self, plot_raw=False, break_after=10):
+    def plot(self, plot_raw=False, break_after=10) -> None:
+        """
+        Plot the spectrum in the spot
+        :param plot_raw: boolean to determine if you should plot raw or corrected spectra
+        :type plot_raw: bool
+        :param break_after: how many spectra to print before stopping
+        :type break_after: int
+        :return: None
+        :rtype: None
+        """
         offset = 0
         plt.figure(1, figsize=(5, 8), dpi=300)
         for index, spectrum in zip(count(), self.spectrum_list):

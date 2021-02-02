@@ -9,9 +9,20 @@ class SpotBuilder:
         self.parser = parser_class(filepath)
 
     def get_position(self):  # maybe encoded in filepath at some point
+        """
+        NOT IMPLEMENTED
+        This gets the position from a filepath
+        :return:
+        :rtype:
+        """
         return 0, 0
 
     def build_spot(self) -> Spot:
+        """
+        This builds a spot from a filepath
+        :return: A spot created from a .txt file
+        :rtype: Spot
+        """
         metadata = self.parser.metadata
         spectra = self.parser.spectra
         spectrum_list = []
