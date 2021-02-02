@@ -8,7 +8,30 @@ from scipy.sparse.linalg import spsolve
 from typing import Tuple, Dict, List
 from src.constants import PositionType
 
-class SpectrumProcessor:  # eventually build ABC
+
+class ABCSpecProcessor(ABC):
+    @abstractmethod
+    def get_wavenumber(self, value: np.array, input_type):
+        pass
+
+    @abstractmethod
+    def correct_spectrum(self):
+        pass
+
+class DataSpecProcessor(ABCSpecProcessor):
+    def __init__(self, laser_wavelength: float, corrected_data: np.array, wavenumbers: np.array):
+        self.laser_wavelength = laser_wavelength
+        self.corrected_spectrum = corrected_data
+        self.wavenumbers = wavenumbers
+
+    def get_wavenumber(self, value: np.array, input_type):
+        return self.wavenumbers
+
+    def correct_spectrum(self, spectrum_array: np.array):
+        return self.corrected_spectrum
+
+
+class SpectrumProcessor(ABCSpecProcessor):  # eventually build ABC
     def __init__(self, laser_wavelength: float) -> None:
         self.laser_wavelength = laser_wavelength
 

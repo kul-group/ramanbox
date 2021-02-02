@@ -1,11 +1,11 @@
 import numpy as np
-from src.processing import SpectrumProcessor
+from src.processing import ABCSpecProcessor
 from src.constants import PositionType, Label
 import xarray as xr
 from typing import Optional
 
 class Spectrum:
-    def __init__(self, raw_data: np.array, processor: SpectrumProcessor,
+    def __init__(self, raw_data: np.array, processor: ABCSpecProcessor,
                  laser_wavelength: float, label: Label = Label.UNCAT,
                  position_type: PositionType = PositionType.WAVELENGTH) -> None:
         self.data_length = len(raw_data)

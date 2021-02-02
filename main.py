@@ -7,4 +7,8 @@ if __name__ == "__main__":
     # print(my_spot.build_DataArray())
     folder_path = "/Users/dda/Code/ramanbox/data"
     sample = Sample.build_sample(folder_path)
-    print(sample.build_Dataset())
+    #simple = sample.save_dataset('data/test')
+    simple2 = Sample.build_from_netcdf('data/test')
+    for spot in simple2.spot_list:
+        for spectrum in spot.spectrum_list:
+            print(spectrum.label)
