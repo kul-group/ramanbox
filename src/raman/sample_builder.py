@@ -2,10 +2,12 @@ from src.raman.spot import Spot
 from src.raman.spectrum import Spectrum
 from src.raman.processing import SpectrumProcessor, DefaultSpotParser
 from src.raman.sample import Sample
-
+from pathlib import Path
 
 class SampleBuilder:
-
+    """
+    This function is useful for the case where each spectrum in a file is its own spot.
+    """
     def __init__(self, filepath: str, parser_class=DefaultSpotParser, row_size: int = 10, row_step: int = 1,
                  col_step:int = 1, start_iter: int = 0):
         self.filepath = filepath
@@ -40,5 +42,5 @@ class SampleBuilder:
             new_spot = Spot(spectrum_list=new_spectrum_list, position=self.get_position(), metadata=metadata,
                             filepath=self.filepath)
             spot_list.append(new_spot)
-
-        return Sample(spot_list)
+        name = Path(self.filepath).stem
+        return Sample(spot_list, name=name)

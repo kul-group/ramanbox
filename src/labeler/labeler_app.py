@@ -4,7 +4,7 @@ Created on Wed Mar  4 09:06:21 2020
 
 @author: dexter
 """
-from src.labeler.new_label_controller import NewLabelController
+from src.labeler.label_controller import LabelController
 import tkinter as tk
 import os
 
@@ -23,7 +23,7 @@ class LablerApp(tk.Frame):
         super().__init__(master)  # initates super constructor
         self.winfo_toplevel().title("Labeler")  # sets window title
         self.spectrumFileName = spectrumFileName  # sets spectrumFileName
-        self.controler = NewLabelController(inputFolderName, outputFolderName, self.spectrumFileName)
+        self.controler = LabelController(inputFolderName, outputFolderName, self.spectrumFileName)
         self.bind_all("<Key>", self.on_key_pressed)  # calls detect key press func
 
         self.master = master  # sets master input to
@@ -65,7 +65,7 @@ class LablerApp(tk.Frame):
         self.back_btn.pack(side="left")
 
         self.back_btn = tk.Button(self)
-        self.back_btn["text"] = "Save Labels"
+        self.back_btn["text"] = "Save Labels (s)"
         self.back_btn["command"] = self.save_labels
         self.back_btn.pack(side="left")
 
@@ -137,6 +137,8 @@ class LablerApp(tk.Frame):
             self.click_maybe()
         if (key == 'b'):
             self.click_back()
+        if (key=='s'):
+            self.save_labels()
 
     def update(self):
         pName, spotIndex, spectrumIndex = self.controler.get_current_info()

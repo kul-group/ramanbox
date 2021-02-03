@@ -34,6 +34,14 @@ def convert_list_to_dict(my_list):
     :rtype: Dict[int, Label]
     """
     new_dict = {}
+    if not isinstance(my_list, list):  # label is just a string
+        tmp_str = my_list
+        split = tmp_str.split(';')
+        key = int(split[0])
+        value = int(split[1])
+        new_dict[key] = Label(value)
+        return new_dict
+
     for tmp_str in my_list:
         split = tmp_str.split(';')
         key = int(split[0])

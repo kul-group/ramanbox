@@ -1,97 +1,128 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  5 12:22:25 2020
-
-@author: dexter
-"""
-from src.labeler.image_generator import *
-
-import os.path
-from os import path
-from collections import OrderedDict
-from pathlib import Path
+import os
+from src.raman.sample import Sample
+from typing import List, Tuple
+import glob
+import xarray as xr
+from src.labeler.image_generator import SpectrumImageMaker
+from src.raman.constants import Label
 
 
-class LabelerController():
-
-    def __init__(self, inputDirectory, outputDirectory='', spectrumPicFileName='test.nc.png'):
+class LabelController:
+    def __init__(self, inputDirectory, output_dir='', spectrumPicFileName='currentSpectrum.png'):
         self.inputDirectory = inputDirectory
-        self.outputDirectory = outputDirectory
+        self.output_dir = output_dir
         self.spectrumPicFileName = spectrumPicFileName
-        self.patientDict = OrderedDict()
-        self.labelsDict = OrderedDict()
-        self.load_patient_data()  # makes self.totalIndexer
-        self.generateImage()
+        self.index_complete = False
 
-    def generateImage(self):
-        pName, spotIndex, spectrumIndex = self.get_current_info()
-        wavenumber = self.patientDict[pName].wavenumbers
-        spectrumData = self.patientDict[pName].corrected[spotIndex, spectrumIndex, :]
+        self.sample_index = 0
+        self.spot_index = 0
+        self.spectrum_index = 0
+
+        self.file_list, self.sample_list = self._get_file_and_sample_list()
+        assert len(self.sample_list) > 0, 'no samples loaded :('
+        self.current_sample = self.sample_list[self.sample_index]
+        self.current_file = self.file_list[self.sample_index]
+        if self.current_sample.name is not None:
+            self.sample_name = self.current_sample.name
+        else:
+            self.sample_name = 'Unnamed_Sample_' + str(self.sample_index)
+
+        self.spot_list = self.current_sample.spot_list
+        self.current_spot = self.spot_list[self.spot_index]
+        self.spectrum_list = self.current_spot.spectrum_list
+        self.current_spectrum = self.spectrum_list[self.spectrum_index]
+
+        self.generate_image()
+
+    @property
+    def output_filepath(self):
+        return os.path.join(self.output_dir, os.path.basename(self.current_file))
+
+    def _get_file_and_sample_list(self) -> Tuple[List[str], List[Sample]]:
+        glob_str = os.path.join(self.inputDirectory, "*.nc")
+        file_list = glob.glob(glob_str)
+        sample_list = []
+        for file in file_list:
+            sample_list.append(Sample.build_from_netcdf(file))
+
+        return file_list, sample_list
+
+    def save_sample(self):
+        self.current_sample.save_dataset(self.output_filepath)
+
+    def skip_to_next_unlabeld_spectrum(self):
+        while self.current_spectrum.label != Label.UNCAT:
+            self.next_spectrum()
+
+    def assign_good_label(self):
+        self.current_spectrum.label = Label.GOOD
+        self.next_spectrum()
+
+    def assign_bad_label(self):
+        self.current_spectrum.label = Label.BAD
+        self.next_spectrum()
+
+    def assign_maybe_label(self):
+        self.current_spectrum.label = Label.MAYBE
+        self.next_spectrum()
+
+    def next_spectrum(self):
+        #self.save_sample()
+        if self.spectrum_index >= len(self.spectrum_list) - 1:
+            if self.spot_index >= len(self.spot_list) - 1:
+                if self.sample_index >= len(self.sample_list) - 1:
+                    print("complete!")
+                    self.index_complete = True
+                else:
+                    self.sample_index += 1
+                self.spot_index = 0
+            else:
+                self.spot_index += 1
+            self.spectrum_index = 0
+        else:
+            self.spectrum_index += 1
+
+        self.update_current_spectrum()
+
+    def previous_spectrum(self):
+        self.index_complete = False
+        if self.spectrum_index <= 0:
+            if self.spot_index <= 0:
+                if self.sample_index <= 0:
+                    print("at start!")
+                else:
+                    self.sample_index -= 1
+                self.update_current_spectrum()
+                self.spot_index = len(self.spot_list) - 1
+            else:
+                self.spot_index -= 1
+            self.update_current_spectrum()
+            self.spectrum_index = len(self.spectrum_list) - 1
+        else:
+            self.spectrum_index -= 1
+
+        self.update_current_spectrum()
+
+    def update_current_spectrum(self):
+        self.current_sample = self.sample_list[self.sample_index]
+        self.current_file = self.file_list[self.sample_index]
+        self.spot_list = self.current_sample.spot_list
+        self.current_spot = self.spot_list[self.spot_index]
+        self.spectrum_list = self.current_spot.spectrum_list
+        self.current_spectrum = self.spectrum_list[self.spectrum_index]
+
+        if self.current_sample.name is not None:
+            self.sample_name = self.current_sample.name
+        else:
+            self.sample_name = 'Unnamed Sample ' + str(self.sample_index)
+
+        self.generate_image()
+
+    def generate_image(self):
+        wavenumber = self.current_spectrum.wavenumbers
+        spectrumData = self.current_spectrum.corrected_data
         tmpSpectrumImageMaker = SpectrumImageMaker(wavenumber, spectrumData, filename=self.spectrumPicFileName)
         tmpSpectrumImageMaker.generate_image()
 
-    def generate_filename(self, pName):
-        filename = os.path.join(self.outputDirectory, pName + '_array.npy')
-        return filename
-
-    def saveLabels(self):
-        Path(self.outputDirectory).mkdir(parents=True, exist_ok=True)
-        pName, spotIndex, spectrumIndex = self.get_current_info()
-        filename = self.generate_filename(pName)
-        np.save(filename, self.labelsDict[pName])
-
-    def load_patient_data(self):
-        globCmd = os.path.join(self.inputDirectory, "*.nc")
-        fileList = glob.glob(globCmd)
-        patientSizeDict = OrderedDict()
-
-        for f in fileList:
-            key = f.split("netcdf/")[1]
-            key = key.split(".nc")[0]
-            newPatient = Patient_Data(f)
-            self.patientDict[key] = newPatient
-            patientSizeDict[key] = newPatient.data.shape[0:2]
-
-            filename = self.generate_filename(key)
-            if (path.exists(filename)):
-                self.labelsDict[key] = np.load(filename)
-            else:
-                self.labelsDict[key] = np.ones((newPatient.data.shape[0:2])) * -1
-
-        self.totalIndexer = TotalIndexer(patientSizeDict)
-        self.totalIndexer.find_start(self)
-
-    def good_click(self):
-        self.click(1)
-
-    def bad_click(self):
-        self.click(0)
-
-    def maybe_click(self):
-        self.click(2)
-
-    def back_click(self):
-        self.totalIndexer.back()
-        self.saveLabels()
-        self.generateImage()
-
     def get_current_info(self):
-        pName = self.totalIndexer.get_patient_name()
-        spotIndex = self.totalIndexer.get_spot_index()
-        spectrumIndex = self.totalIndexer.get_spectrum_index()
-        return pName, spotIndex, spectrumIndex
-
-    def click(self, value):
-        pName, spotIndex, spectrumIndex = self.get_current_info()
-        self.labelsDict[pName][spotIndex, spectrumIndex] = value
-        self.saveLabels()
-        self.totalIndexer.forward()
-        self.generateImage()
-
-    def get_spectrum_assignment(self):
-        pName, spotIndex, spectrumIndex = self.get_current_info()
-        return self.labelsDict[pName][spotIndex, spectrumIndex]
-
-    def get_spectrum_label_array(self):
-        pName, spotIndex, spectrumIndex = self.get_current_info()
-        return self.labelsDict[pName]
+        return self.sample_name, self.spot_index, self.spectrum_index
