@@ -1,16 +1,15 @@
 from typing import List, Optional, Dict
-import copy
-from src.spot import Spot
-from src.processing import DefaultSpotParser
+from src.raman.spot import Spot
+from src.raman.processing import DefaultSpotParser
 import glob
-from src.builders import SpotBuilder
+from src.raman.builders import SpotBuilder
 import os
 import xarray as xr
-from src.constants import PositionType, Label
-from src.processing import DataSpecProcessor, SpotParser
-from src.spectrum import Spectrum
+from src.raman.constants import PositionType, Label
+from src.raman.processing import DataSpecProcessor
+from src.raman.spectrum import Spectrum
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def convert_dict_labels_to_list(label_dict: Dict[int, Label]) -> List[str]:
     """
@@ -35,6 +34,14 @@ def convert_list_to_dict(my_list):
     :rtype: Dict[int, Label]
     """
     new_dict = {}
+    if not isinstance(my_list, list):  # label is just a string
+        tmp_str = my_list
+        split = tmp_str.split(';')
+        key = int(split[0])
+        value = int(split[1])
+        new_dict[key] = Label(value)
+        return new_dict
+
     for tmp_str in my_list:
         split = tmp_str.split(';')
         key = int(split[0])
@@ -63,8 +70,11 @@ class Sample:
         self.filepath = filepath
         self.name = name
 
-    def plot(self):
-        pass
+    def plot(self, axis=None, plot_raw=False, break_after=10, subplots_shape=(3,3)) -> None:
+        fig, axes = plt.subplots(*subplots_shape, dpi=300, figsize=(8,8))
+        for spot, axis in zip(self.spot_list, axes.flatten()):
+            spot.plot(axis=axis, plot_raw=plot_raw, break_after=break_after)
+        fig.show()
 
     @staticmethod
     def build_sample(folder_path: str, parser_class=DefaultSpotParser, metadata=None, name=None) -> "Sample":
@@ -81,12 +91,14 @@ class Sample:
         :return: A newly created sample
         :rtype: "Sample"
         """
+        assert os.path.isdir(folder_path), 'folder_path must point to a directory and not a single file'
         file_list = glob.glob(os.path.join(folder_path, '*.txt'))
         spot_list = []
         for file in file_list:
             spot_list.append(SpotBuilder(file, parser_class).build_spot())
 
         return Sample(spot_list, metadata=metadata, filepath=folder_path, name=name)
+
 
     def build_Dataset(self) -> xr.Dataset:
         """
@@ -100,7 +112,6 @@ class Sample:
             dict_vars[str(index)] = spot.build_DataArray()
 
         return xr.Dataset(dict_vars, attrs=self.metadata)
-
 
     def buildFlatDataset(self):
         dict_vars = {}
@@ -121,6 +132,7 @@ class Sample:
         :rtype: None
         """
         dataset = self.build_Dataset()
+        dataset.attrs['name'] = str(self.name)
         for index in dataset:
             dataset[index].attrs.pop('metadata')  # metadata is not currently saved
             dataset[index].attrs['labels'] = convert_dict_labels_to_list(dataset[index].attrs['labels'])
@@ -130,18 +142,17 @@ class Sample:
 
 
     @staticmethod
-    def build_from_netcdf(filepath: str, name: Optional[str] = None) -> None:
+    def build_from_netcdf(filepath: str) -> None:
         """
        Build a Sample object from a netcdf file
         :param filepath: filepath to the netcdf object
         :type filepath: str
-        :param name: name of the object to create
-        :type name: str
         :return: None
         :rtype: None
         """
         dataset = xr.open_dataset(filepath)
         dataset.close()
+        name = dataset.attrs['name']
         spot_list = []
         for index in dataset:
             # build a spot
@@ -168,3 +179,13 @@ class Sample:
 
         return Sample(spot_list, dataset.attrs, filepath, name)
 
+    def to_pandas(self, use_corrected=True):
+        complete_df = None
+        for spot in self.spot_list:
+            if complete_df is None:
+                complete_df = spot.to_pandas()
+            else:
+                complete_df = complete_df.append(spot.to_pandas(use_corrected), ignore_index=True)
+
+        assert complete_df is not None, 'complete df is none, spot list must be empty!'
+        return complete_df

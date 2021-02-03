@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import count
 from typing import List, Optional, Tuple, Dict
-from src.spectrum import Spectrum
+from src.raman.spectrum import Spectrum
 import xarray as xr
-
+import pandas as pd
 
 class Spot:
     def __init__(self, spectrum_list: List[Spectrum], position: Optional[Tuple[float, float]] = None,
@@ -51,7 +51,7 @@ class Spot:
             # key assumptions to building a spot
             assert spectrum.data_length == spectrum_length, 'all spectra must be same length'
             assert spectrum.laser_wavelength == laser_wavelength, 'all spectra must use same laser wavelength'
-            #assert np.testing.assert_array_equal(wavenumbers, spectrum.wavenumbers, err_msg='all spectra in spot must have same wavenumbers', verbose=True)
+            # assert np.testing.assert_array_equal(wavenumbers, spectrum.wavenumbers, err_msg='all spectra in spot must have same wavenumbers', verbose=True)
             np.testing.assert_almost_equal(wavenumbers, spectrum.wavenumbers, 3,
                                            err_msg='all spectra in spot must have same wavenumbers')
 
@@ -60,14 +60,12 @@ class Spot:
             attributes["labels"][index] = spectrum.label
             spectra_indices.append(index)
 
-
         spectrum_type = ['raw', 'corrected']
         coords = [spectra_indices, spectrum_type, wavenumbers]
         return xr.DataArray(data, coords=coords,
                             dims=dims, attrs=attributes)
 
-
-    def plot(self, plot_raw=False, break_after=10) -> None:
+    def plot(self, axis=None, plot_raw=False, break_after=10) -> None:
         """
         Plot the spectrum in the spot
         :param plot_raw: boolean to determine if you should plot raw or corrected spectra
@@ -78,17 +76,45 @@ class Spot:
         :rtype: None
         """
         offset = 0
-        plt.figure(1, figsize=(5, 8), dpi=300)
+        if axis is None:
+            fig, axis = plt.subplots(1, 1)
+
         for index, spectrum in zip(count(), self.spectrum_list):
             x = spectrum.wavenumbers
-            y = spectrum.corrected_data + offset
+            if plot_raw:
+                y = spectrum.raw_data + offset
+            else:
+                y = spectrum.corrected_data + offset
             offset += max(spectrum.corrected_data) * 1.1
-            plt.plot(x, y, label=f'index {index}')
+            axis.plot(x, y, label=f'index {index}')
             if index >= break_after:
                 break
 
-        plt.legend()
-        plt.xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
-        plt.ylabel("Offset Relative Intensity")
-        plt.show()
+        axis.set_xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
+        axis.set_ylabel("Offset Relative Intensity")
+        axis.legend()
+        if axis is None:
+            fig.show()
 
+    def to_pandas(self, use_corrected=True):
+        spec_list = []
+        label_list = []
+        x_pos_list = []
+        y_pos_list = []
+        for spectrum in self.spectrum_list:
+            spec = spectrum.to_numpy(use_corrected)
+            label = spectrum.label
+
+            if self.position is not None:
+                x_pos, y_pos = self.position
+            else:
+                x_pos = None
+                y_pos = None
+            spec_list.append(spec)
+            label_list.append(label)
+            x_pos_list.append(x_pos)
+            y_pos_list.append(y_pos)
+
+        dict_list = {'spectrum': spec_list, 'label': label_list, 'x_pos': x_pos_list, 'y_pos': y_pos_list}
+
+        return pd.DataFrame(dict_list)

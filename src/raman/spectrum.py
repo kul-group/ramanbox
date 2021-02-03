@@ -1,13 +1,15 @@
 import numpy as np
-from src.processing import ABCSpecProcessor
-from src.constants import PositionType, Label
+from src.raman.processing import ABCSpecProcessor
+from src.raman.constants import PositionType, Label
 import xarray as xr
 from typing import Optional
+
 
 class Spectrum:
     """
     Class Spectrum represents a single spectrum
     """
+
     def __init__(self, raw_data: np.array, processor: ABCSpecProcessor,
                  laser_wavelength: float, label: Label = Label.UNCAT,
                  position_type: PositionType = PositionType.WAVELENGTH) -> None:
@@ -52,3 +54,12 @@ class Spectrum:
         data_types = ['raw', 'corrected']
         return xr.DataArray(combined, coords=[self.wavenumbers, data_types],
                             dims=['wavenumber', 'spectrum'], attrs=attrs)
+
+    def to_numpy(self, use_corrected=True):
+        if use_corrected:
+            x = self.corrected_data
+        else:
+            x = self.raw_data
+
+        return x
+
