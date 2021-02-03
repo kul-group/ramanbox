@@ -8,7 +8,7 @@ class SampleBuilder:
     """
     This function is useful for the case where each spectrum in a file is its own spot.
     """
-    def __init__(self, filepath: str, parser_class=DefaultSpotParser, row_size: int = 10, row_step: int = 1,
+    def __init__(self, filepath: str, parser_class=DefaultSpotParser, row_size: int = 20, row_step: int = 1,
                  col_step:int = 1, start_iter: int = 0):
         self.filepath = filepath
         self.parser = parser_class(filepath)
@@ -23,8 +23,9 @@ class SampleBuilder:
         :return: position
         :rtype: Tuple[int, int]
         """
-
-        return (self.iter * self.row_step)% self.row_size, self.iter // (self.row_size * self.row_step)* self.col_step
+        result = (self.iter * self.row_step)% self.row_size, self.iter // (self.row_size * self.row_step)* self.col_step
+        self.iter += 1
+        return result
 
     def build_sample(self) -> Sample:
         """

@@ -91,6 +91,7 @@ class Sample:
         :return: A newly created sample
         :rtype: "Sample"
         """
+        assert os.path.isdir(folder_path), 'folder_path must point to a directory and not a single file'
         file_list = glob.glob(os.path.join(folder_path, '*.txt'))
         spot_list = []
         for file in file_list:
@@ -131,6 +132,7 @@ class Sample:
         :rtype: None
         """
         dataset = self.build_Dataset()
+        dataset.attrs['name'] = str(self.name)
         for index in dataset:
             dataset[index].attrs.pop('metadata')  # metadata is not currently saved
             dataset[index].attrs['labels'] = convert_dict_labels_to_list(dataset[index].attrs['labels'])
@@ -140,18 +142,17 @@ class Sample:
 
 
     @staticmethod
-    def build_from_netcdf(filepath: str, name: Optional[str] = None) -> None:
+    def build_from_netcdf(filepath: str) -> None:
         """
        Build a Sample object from a netcdf file
         :param filepath: filepath to the netcdf object
         :type filepath: str
-        :param name: name of the object to create
-        :type name: str
         :return: None
         :rtype: None
         """
         dataset = xr.open_dataset(filepath)
         dataset.close()
+        name = dataset.attrs['name']
         spot_list = []
         for index in dataset:
             # build a spot
@@ -178,3 +179,13 @@ class Sample:
 
         return Sample(spot_list, dataset.attrs, filepath, name)
 
+    def to_pandas(self, use_corrected=True):
+        complete_df = None
+        for spot in self.spot_list:
+            if complete_df is None:
+                complete_df = spot.to_pandas()
+            else:
+                complete_df = complete_df.append(spot.to_pandas(use_corrected), ignore_index=True)
+
+        assert complete_df is not None, 'complete df is none, spot list must be empty!'
+        return complete_df
