@@ -10,8 +10,8 @@ from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
 # additional libs
 from typing import Dict, List, Optional
-from src.processing import DefaultSpotParser
-from src.builders import SpotBuilder
+from src.raman.processing import DefaultSpotParser
+from src.raman.builders import SpotBuilder
 import xarray as xr
 
 

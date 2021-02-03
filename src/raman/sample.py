@@ -1,16 +1,15 @@
 from typing import List, Optional, Dict
-import copy
-from src.spot import Spot
-from src.processing import DefaultSpotParser
+from src.raman.spot import Spot
+from src.raman.processing import DefaultSpotParser
 import glob
-from src.builders import SpotBuilder
+from src.raman.builders import SpotBuilder
 import os
 import xarray as xr
-from src.constants import PositionType, Label
-from src.processing import DataSpecProcessor, SpotParser
-from src.spectrum import Spectrum
+from src.raman.constants import PositionType, Label
+from src.raman.processing import DataSpecProcessor
+from src.raman.spectrum import Spectrum
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def convert_dict_labels_to_list(label_dict: Dict[int, Label]) -> List[str]:
     """
@@ -63,8 +62,11 @@ class Sample:
         self.filepath = filepath
         self.name = name
 
-    def plot(self):
-        pass
+    def plot(self, axis=None, plot_raw=False, break_after=10, subplots_shape=(3,3)) -> None:
+        fig, axes = plt.subplots(*subplots_shape, dpi=300, figsize=(8,8))
+        for spot, axis in zip(self.spot_list, axes.flatten()):
+            spot.plot(axis=axis, plot_raw=plot_raw, break_after=break_after)
+        fig.show()
 
     @staticmethod
     def build_sample(folder_path: str, parser_class=DefaultSpotParser, metadata=None, name=None) -> "Sample":
@@ -88,6 +90,7 @@ class Sample:
 
         return Sample(spot_list, metadata=metadata, filepath=folder_path, name=name)
 
+
     def build_Dataset(self) -> xr.Dataset:
         """
         Build a Dataset xarray object from current object
@@ -100,7 +103,6 @@ class Sample:
             dict_vars[str(index)] = spot.build_DataArray()
 
         return xr.Dataset(dict_vars, attrs=self.metadata)
-
 
     def buildFlatDataset(self):
         dict_vars = {}

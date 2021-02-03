@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
 from typing import Tuple, Dict, List
-from src.constants import PositionType
+from src.raman.constants import PositionType
 
 
 class ABCSpecProcessor(ABC):
@@ -100,10 +100,10 @@ class SpectrumProcessor(ABCSpecProcessor):  # eventually build ABC
         :rtype: np.array
         """
         if input_type == PositionType.WAVENUMBER:
-            return wavelengths
+            return positions
 
         assert input_type == PositionType.WAVELENGTH, 'wrong position type, cannot do conversion'
-        return (1 / self.laser_wavelength - 1 / wavelengths) * (10e9 / 10e2)  # cm^-1` relative wavenumbers
+        return (1 / self.laser_wavelength - 1 / positions) * (10e9 / 10e2)  # cm^-1` relative wavenumbers
 
     def correct_baseline(self, spectrum_array: np.array) -> np.array:
         """

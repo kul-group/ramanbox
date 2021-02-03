@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import count
 from typing import List, Optional, Tuple, Dict
-from src.spectrum import Spectrum
+from src.raman.spectrum import Spectrum
 import xarray as xr
 
 
@@ -67,7 +67,7 @@ class Spot:
                             dims=dims, attrs=attributes)
 
 
-    def plot(self, plot_raw=False, break_after=10) -> None:
+    def plot(self, axis=None, plot_raw=False, break_after=10) -> None:
         """
         Plot the spectrum in the spot
         :param plot_raw: boolean to determine if you should plot raw or corrected spectra
@@ -78,17 +78,24 @@ class Spot:
         :rtype: None
         """
         offset = 0
-        plt.figure(1, figsize=(5, 8), dpi=300)
+        if axis is None:
+            fig, axis = plt.subplots(1,1)
+
         for index, spectrum in zip(count(), self.spectrum_list):
             x = spectrum.wavenumbers
-            y = spectrum.corrected_data + offset
+            if plot_raw:
+                y = spectrum.raw_data + offset
+            else:
+                y = spectrum.corrected_data + offset
             offset += max(spectrum.corrected_data) * 1.1
-            plt.plot(x, y, label=f'index {index}')
+            axis.plot(x, y, label=f'index {index}')
             if index >= break_after:
                 break
 
-        plt.legend()
-        plt.xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
-        plt.ylabel("Offset Relative Intensity")
-        plt.show()
+        axis.set_xlabel(r"Wavenumbers (cm${\rm ^{-1}}$)")
+        axis.set_ylabel("Offset Relative Intensity")
+        axis.legend()
+        if axis is None:
+            fig.show()
+
 
