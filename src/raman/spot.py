@@ -23,7 +23,7 @@ class Spot:
         self.spectrum_list = spectrum_list
         self.position = position
         self.metadata = metadata
-        self.filepath = filepath
+        self.filepath = str(filepath)
 
     def build_DataArray(self):
         """
