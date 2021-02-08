@@ -10,6 +10,7 @@ from src.raman.processing import DataSpecProcessor
 from src.raman.spectrum import Spectrum
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def convert_dict_labels_to_list(label_dict: Dict[int, Label]) -> List[str]:
     """
@@ -142,7 +143,7 @@ class Sample:
 
 
     @staticmethod
-    def build_from_netcdf(filepath: str) -> None:
+    def build_from_netcdf(filepath: str) -> "Sample":
         """
        Build a Sample object from a netcdf file
         :param filepath: filepath to the netcdf object
@@ -180,12 +181,11 @@ class Sample:
         return Sample(spot_list, dataset.attrs, filepath, name)
 
     def to_pandas(self, use_corrected=True):
-        complete_df = None
+        complete_df = pd.DataFrame()
         for spot in self.spot_list:
-            if complete_df is None:
-                complete_df = spot.to_pandas()
-            else:
-                complete_df = complete_df.append(spot.to_pandas(use_corrected), ignore_index=True)
+            spot_df = spot.to_pandas(use_corrected)
+            spot_df['name'] = self.name
+            complete_df = complete_df.append(spot_df, ignore_index=True)
 
         assert complete_df is not None, 'complete df is none, spot list must be empty!'
         return complete_df

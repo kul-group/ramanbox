@@ -43,5 +43,5 @@ class SampleBuilder:
             new_spot = Spot(spectrum_list=new_spectrum_list, position=self.get_position(), metadata=metadata,
                             filepath=self.filepath)
             spot_list.append(new_spot)
-        name = Path(self.filepath).stem
+        name = str(Path(self.filepath).stem)
         return Sample(spot_list, name=name)

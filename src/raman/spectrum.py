@@ -57,9 +57,9 @@ class Spectrum:
 
     def to_numpy(self, use_corrected=True):
         if use_corrected:
-            x = self.corrected_data
+            x = self.corrected_data.data
         else:
-            x = self.raw_data
+            x = self.raw_data.data
 
         return x
 
