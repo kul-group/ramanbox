@@ -1,4 +1,4 @@
-from src.labeler.labeler_app import LablerApp
+from ramanbox.labeler.labeler_app import LablerApp
 import os
 import tkinter as tk
 import git

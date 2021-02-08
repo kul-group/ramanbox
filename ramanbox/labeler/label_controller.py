@@ -1,10 +1,10 @@
 import os
-from src.raman.sample import Sample
+from ramanbox.raman.sample import Sample
 from typing import List, Tuple
 import glob
 import xarray as xr
-from src.labeler.image_generator import SpectrumImageMaker
-from src.raman.constants import Label
+from ramanbox.labeler.image_generator import SpectrumImageMaker
+from ramanbox.raman.constants import Label
 
 
 class LabelController:

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
-from src.raman.sample_builder import SampleBuilder
-from src.raman.sample import Sample
+from ramanbox.raman.sample_builder import SampleBuilder
+from ramanbox.raman.sample import Sample
 
 
 def raw_raster_to_unlabeled_netcdf(input_dir: str, output_dir: str) -> None:

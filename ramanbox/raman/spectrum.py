@@ -1,6 +1,6 @@
 import numpy as np
-from src.raman.processing import ABCSpecProcessor
-from src.raman.constants import PositionType, Label
+from ramanbox.raman.processing import ABCSpecProcessor
+from ramanbox.raman.constants import PositionType, Label
 import xarray as xr
 from typing import Optional
 

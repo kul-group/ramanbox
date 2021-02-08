@@ -1,13 +1,13 @@
 from typing import List, Optional, Dict
-from src.raman.spot import Spot
-from src.raman.processing import DefaultSpotParser
+from ramanbox.raman.spot import Spot
+from ramanbox.raman.processing import DefaultSpotParser
 import glob
-from src.raman.builders import SpotBuilder
+from ramanbox.raman.builders import SpotBuilder
 import os
 import xarray as xr
-from src.raman.constants import PositionType, Label
-from src.raman.processing import DataSpecProcessor
-from src.raman.spectrum import Spectrum
+from ramanbox.raman.constants import PositionType, Label
+from ramanbox.raman.processing import DataSpecProcessor
+from ramanbox.raman.spectrum import Spectrum
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

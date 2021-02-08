@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import count
 from typing import List, Optional, Tuple, Dict
-from src.raman.spectrum import Spectrum
+from ramanbox.raman.spectrum import Spectrum
 import xarray as xr
 import pandas as pd
 
