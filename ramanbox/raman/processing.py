@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse import csc_matrix, eye, diags
 from scipy.sparse.linalg import spsolve
 from typing import Tuple, Dict, List
-from src.raman.constants import PositionType
+from ramanbox.raman.constants import PositionType
 
 
 class ABCSpecProcessor(ABC):

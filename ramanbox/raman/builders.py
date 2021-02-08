@@ -1,6 +1,6 @@
-from src.raman.processing import SpectrumProcessor, DefaultSpotParser
-from src.raman.spot import Spot
-from src.raman.spectrum import Spectrum
+from ramanbox.raman.processing import SpectrumProcessor, DefaultSpotParser
+from ramanbox.raman.spot import Spot
+from ramanbox.raman.spectrum import Spectrum
 
 
 class SpotBuilder:

@@ -1,5 +1,5 @@
-from src.raman.sample import Sample
-from src.raman.constants import Label
+from ramanbox.raman.sample import Sample
+from ramanbox.raman.constants import Label
 
 class SpectrometerSim:
     def __init__(self, netcdf_filepath: str) -> None:

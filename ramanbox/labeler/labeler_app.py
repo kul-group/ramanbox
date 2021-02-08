@@ -4,7 +4,7 @@ Created on Wed Mar  4 09:06:21 2020
 
 @author: dexter
 """
-from src.labeler.label_controller import LabelController
+from ramanbox.labeler.label_controller import LabelController
 import tkinter as tk
 import os
 
