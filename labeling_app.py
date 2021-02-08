@@ -10,7 +10,7 @@ if __name__ == "__main__":
     labeled_data_dir = os.path.join(root_dir, 'data', 'labeled_data')
 
     root = tk.Tk()
-    inputFolder = unlabeled_data_dir
+    inputFolder = labeled_data_dir
     outputFolder = labeled_data_dir
     app = LablerApp(master=root, inputFolderName=inputFolder, outputFolderName=outputFolder)
     app.mainloop()

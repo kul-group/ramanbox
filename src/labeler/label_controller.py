@@ -48,6 +48,7 @@ class LabelController:
         return file_list, sample_list
 
     def save_sample(self):
+        print(f"sample saved to {self.output_filepath}")
         self.current_sample.save_dataset(self.output_filepath)
 
     def skip_to_next_unlabeld_spectrum(self):
@@ -74,6 +75,7 @@ class LabelController:
                     print("complete!")
                     self.index_complete = True
                 else:
+                    self.save_sample()
                     self.sample_index += 1
                 self.spot_index = 0
             else:

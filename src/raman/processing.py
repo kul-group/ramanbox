@@ -155,8 +155,9 @@ class SpectrumProcessor(ABCSpecProcessor):  # eventually build ABC
         :return: corrected spectrum
         :rtype: np.array
         """
-        return self.normalize(self.smooth_spectrum(self.correct_baseline(self.remove_cosmic_rays(spectrum_array))))
-
+        #return self.normalize(self.smooth_spectrum(self.correct_baseline(self.remove_cosmic_rays(spectrum_array))))
+        # note for now do not normalize spectra
+        return self.smooth_spectrum(self.correct_baseline(self.remove_cosmic_rays(spectrum_array)))
 
     def _ws_wrapper(self, x: np.array, lambda_=5, porder=1) -> np.array:
         """

@@ -143,7 +143,7 @@ class Sample:
 
 
     @staticmethod
-    def build_from_netcdf(filepath: str) -> None:
+    def build_from_netcdf(filepath: str) -> "Sample":
         """
        Build a Sample object from a netcdf file
         :param filepath: filepath to the netcdf object

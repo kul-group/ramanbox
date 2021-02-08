@@ -1,4 +1,4 @@
-from src.pipeline.pipelines import raw_raster_to_unlabled_netcdf
+from src.pipeline.pipelines import raw_raster_to_unlabeled_netcdf
 import git
 import os
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     # generate netcdf files from raw data
     print(unlabeled_data_dir)
-    raw_raster_to_unlabled_netcdf(raw_data_dir, unlabeled_data_dir)
+    raw_raster_to_unlabeled_netcdf(raw_data_dir, unlabeled_data_dir)
 
 
 
