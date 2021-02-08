@@ -2,7 +2,7 @@ from src.raman.sample import Sample
 from src.raman.constants import Label
 
 class SpectrometerSim:
-    def __init__(self, netcdf_filepath: str):
+    def __init__(self, netcdf_filepath: str) -> None:
         self._sample = Sample.build_from_netcdf(netcdf_filepath)
         self._pandas = self._sample.to_pandas()
         self._pandas['Predicted_Label'] = Label.UNCAT
@@ -11,7 +11,6 @@ class SpectrometerSim:
 
         self._current_row = None
         self._current_index = None
-        #self.current_raw_spectrum = None
         self.current_corrected_spectrum = None
         self.x_pos = None
         self.y_pos = None
@@ -23,6 +22,7 @@ class SpectrometerSim:
             self.y_pos = self._current_row['y_pos']
         except StopIteration:
             self._complete = True
+            self.save()
             return None
 
         self.current_corrected_spectrum = self._current_row['spectrum']
@@ -35,3 +35,5 @@ class SpectrometerSim:
         self._pandas.iloc[self._sample]['Predicted_Label'] = Label.GOOD
         self._get_next()
 
+    def save(self, output_path='output.csv'):
+        self._pandas.to_csv(output_path)
