@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='ramanbox',
-    version='0.1.0',
+    version='0.1.2',
     description='A Python package for organizing SERS spectra',
     url='https://github.com/kul-group/ramanbox',
     author='Dexter Antonio',
