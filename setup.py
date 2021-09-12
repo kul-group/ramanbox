@@ -10,7 +10,7 @@ setup(
     author_email='dexter.d.antonio@gmail.com',
     license='MIT',
     packages=['ramanbox'],
-    install_requires=['xarray','numpy','pandas', 'netCDF4', 'gitpython'],
+    install_requires=['xarray','numpy','pandas', 'netCDF4', 'gitpython', 'scipy'],
 
     classifiers=[
         'Development Status :: 1 - Planning',

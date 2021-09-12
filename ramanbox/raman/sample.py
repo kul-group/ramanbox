@@ -143,7 +143,7 @@ class Sample:
 
 
     @staticmethod
-    def build_from_netcdf(filepath: str) -> "Sample":
+    def build_from_netcdf(filepath: str, engine='netcdf4') -> "Sample":
         """
        Build a Sample object from a netcdf file
         :param filepath: filepath to the netcdf object
@@ -151,7 +151,7 @@ class Sample:
         :return: None
         :rtype: None
         """
-        dataset = xr.open_dataset(filepath)
+        dataset = xr.open_dataset(filepath, engine=engine)
         dataset.close()
         name = dataset.attrs['name']
         spot_list = []
