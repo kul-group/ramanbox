@@ -218,7 +218,7 @@ class SpectrumProcessor(ABCSpecProcessor):  # eventually build ABC
             d = x - z
             dssn = np.abs(d[d < 0].sum())
             if (dssn < 0.001 * (abs(x)).sum() or i == itermax):
-                if (i == itermax): print('WARING max iteration reached! at i = %d j = %d' % (i, j))
+                if (i == itermax): print('WARING max iteration reached! at i = %d' % (i))
                 break
             w[d >= 0] = 0  # d>0 means that this point is part of a peak, so its weight is set to 0 in order to ignore it
             w[d < 0] = np.exp(i * np.abs(d[d < 0]) / dssn)
@@ -370,6 +370,8 @@ class DefaultSpotParser(SpotParser):
         data_array = np.zeros((1024, 2), dtype=float)  # this is for storing the data
 
         for line in file_iterator:
+            if i ==0:  
+                data_list.append(data_array)
             if (line == "\n"):  # skips new line characters at the begining of the file
                 continue
             splt_line = line.split("	")
@@ -379,7 +381,7 @@ class DefaultSpotParser(SpotParser):
                 # if you go through one whole dataset  if(len(wavelength_list)!=0 and wavelength<wavelength_list[-1]):
                 # #if the wavelengths go back to the start point, restart things
             if i >= self.spectrum_length:
-                data_list.append(data_array)
+                #data_list.append(data_array)
                 data_array = np.zeros((1024, 2), dtype=float)  # clears data array for next round
                 i = 0
             wavelength = float(splt_line[0])
