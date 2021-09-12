@@ -8,7 +8,9 @@ The Raman Box Python package consists of a series of Python objects to organize 
 1.	Clone the ramanbox repository ``https://github.com/kul-group/ramanbox``
 2.	Use terminal to navigate to the cloned repo directory ``cd ramanbox```
 3.	Run the command 
-`pip install .`
+`pip install -e .`
+
+Note that for an unknown reason `pip install .` does not work. 
 
 
 
